@@ -1,25 +1,9 @@
 class App
 
   def call(env)
-    @req = Rack::Request.new(env)
-    if path_valid?(env)
-      [
-        404,
-        { 'Content-Type' => 'text/plain' },
-        [@req.params['format']]
-      ]
-
-      date_format = DateFormat.new(@req.params['format'])
-
-      if date_format.valid?
-        status = 200
-        body = date_format.valid
-      else
-        status = 400
-        body = date_format.invalid
-      end
-
-      [status, headers, [body]]
+    request = Rack::Request.new(env)
+    if path_valid?(request)
+      path_valid(request)
     else
       path_invalid
     end
@@ -27,20 +11,35 @@ class App
 
   private
 
-  def path_valid?(env)
-    @req.path_info == '/time'
+  def path_valid?(request)
+    request.path_info == '/time'
   end
 
   def path_invalid
-    [
-      404,
-      { 'Content-Type' => 'text/plain' },
-      ["Not Found\n"]
-    ]
+    response(404, headers, "Not Found\n")
+  end
 
+  def path_valid(request)
+    date_format = DateFormat.new(request.params['format'])
+    date_format.call
+
+    if date_format.valid?
+      response(200, headers, date_format.valid)
+    else
+      response(400, headers, date_format.invalid)
+    end
   end
 
   def headers
     { 'Content-Type' => 'text/plain' }
+  end
+
+  def response(status, header, body)
+    response = Rack::Response.new
+    response.status = status
+    response.headers.merge(header)
+    response.body = [body]
+
+    response.finish
   end
 end

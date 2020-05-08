@@ -10,17 +10,29 @@ class DateFormat
   }.freeze
 
   def initialize(format)
-    @format = format.split(',')
-    @unknown_format = @format.reject { |format| ALLOW_FORMATS.key?(format) }
+    @format = format
+    @unknown_format = []
+    @time_params = []
+  end
+
+  def call
+    @format = @format.split(',')
+
+    @format.each do |param|
+      if ALLOW_FORMATS.key?(param)
+        @time_params << ALLOW_FORMATS[param]
+      else
+        @unknown_format << param
+      end
+    end
   end
 
   def valid?
-    @unknown_format.empty? ? true : false
+    @unknown_format.empty?
   end
 
   def valid
-    time_params = @format.map{ |val| ALLOW_FORMATS[val] }
-    return Time.now.strftime(time_params.join("-"))
+    return Time.now.strftime(@time_params.join("-"))
   end
 
   def invalid
