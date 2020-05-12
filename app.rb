@@ -16,7 +16,7 @@ class App
   end
 
   def path_invalid
-    response(404, headers, "Not Found\n")
+    response(404, "Not Found\n")
   end
 
   def path_valid(request)
@@ -24,20 +24,16 @@ class App
     date_format.call
 
     if date_format.valid?
-      response(200, headers, date_format.valid)
+      response(200, date_format.valid)
     else
-      response(400, headers, date_format.invalid)
+      response(400, date_format.invalid)
     end
   end
 
-  def headers
-    { 'Content-Type' => 'text/plain' }
-  end
-
-  def response(status, header, body)
+  def response(status, body)
     response = Rack::Response.new
     response.status = status
-    response.headers.merge(header)
+    response.headers['Content-Type'] = 'text/plain'
     response.body = [body]
 
     response.finish
